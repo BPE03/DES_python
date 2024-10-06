@@ -73,21 +73,11 @@ def dec2bin(num):
 			ans = '0' + ans
 	return ans
 
+def text2hex(s):
+    return ''.join(format(ord(c), '02X') for c in s)
 
-
-# ASCII text to binary conversion
-def text2bin(text):
-    bin = ''.join(format(ord(char), '08b') for char in text)
-    return bin
-
-# Binary to ASCII text conversion
-def bin2text(binary_string):
-    # Split the binary string into chunks of 8 bits
-    binary_values = [binary_string[i:i+8] for i in range(0, len(binary_string), 8)]
-    
-    # Convert each 8-bit chunk to a character
-    ascii_text = ''.join(chr(int(bv, 2)) for bv in binary_values)
-    return ascii_text
+def hex2text(hex_string):
+    return bytes.fromhex(hex_string).decode('ascii')
 
 # Permute function to rearrange the bits
 def permute(k, arr, n):
@@ -214,7 +204,7 @@ perm_p = [16, 7, 20, 21, 29, 12, 28, 17,
 
 def encrypt(pt, rk):
 	# Convert plain text to binary
-    pt = text2bin(pt)
+    pt = hex2bin(pt)
     print("Plain Text : ", bin2hex(pt))
     # Initial Permutation
     pt = permute(pt, initial_perm, 64)
@@ -313,7 +303,9 @@ for i in range(0, 16):
 
 	rk.append(round_key)
 
-plain_text = "Hello World!"
+plain_text = "Hello World"
+plain_text = text2hex(plain_text)
+
 print("Encryption")
 cipher_text = bin2hex(encrypt(plain_text, rk))
 print("Cipher Text : ", cipher_text)
@@ -321,4 +313,5 @@ print("Cipher Text : ", cipher_text)
 print("Decryption")
 rk_rev = rk[::-1]
 text = bin2hex(encrypt(cipher_text, rk_rev))
-print("Plain Text : ", text)
+print("Hex Plain Text : ", text)
+print("Plain Text : ", hex2text(text))
