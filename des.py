@@ -1,6 +1,59 @@
+# Hexadecimal to binary conversion
+
+
+def hex2bin(hex):
+	mp = {'0': "0000",
+		'1': "0001",
+		'2': "0010",
+		'3': "0011",
+		'4': "0100",
+		'5': "0101",
+		'6': "0110",
+		'7': "0111",
+		'8': "1000",
+		'9': "1001",
+		'A': "1010",
+		'B': "1011",
+		'C': "1100",
+		'D': "1101",
+		'E': "1110",
+		'F': "1111"}
+	bin = ""
+	for i in range(len(hex)):
+		bin = bin + mp[hex[i]]
+	return bin
+
+# Binary to hexadecimal conversion
+def bin2hex(bin):
+	mp = {"0000": '0',
+		"0001": '1',
+		"0010": '2',
+		"0011": '3',
+		"0100": '4',
+		"0101": '5',
+		"0110": '6',
+		"0111": '7',
+		"1000": '8',
+		"1001": '9',
+		"1010": 'A',
+		"1011": 'B',
+		"1100": 'C',
+		"1101": 'D',
+		"1110": 'E',
+		"1111": 'F'}
+	hex = ""
+	for i in range(0, len(bin), 4):
+		ch = ""
+		ch = ch + bin[i]
+		ch = ch + bin[i + 1]
+		ch = ch + bin[i + 2]
+		ch = ch + bin[i + 3]
+		hex = hex + mp[ch]
+
+	return hex
+
 # Binary to decimal conversion
 def bin2dec(binary):
-
 	decimal, i, = 0, 0
 	while(binary != 0):
 		dec = binary % 10
@@ -20,19 +73,7 @@ def dec2bin(num):
 			ans = '0' + ans
 	return ans
 
-# Lists of Decimal to binary conversion
-def dec2binlist(num):
-    ans = []
-    for i in range(0, len(num)):
-        bin_val = bin(num[i]).replace("0b", "")
-        if(len(bin_val) % 4 != 0):
-            div = len(bin_val) / 4
-            div = int(div)
-            counter = (4 * (div + 1)) - len(ans)
-            for i in range(0, counter):
-                bin_val = '0' + bin_val
-        ans.append(bin_val)
-    return ans
+
 
 # ASCII text to binary conversion
 def text2bin(text):
@@ -174,7 +215,7 @@ perm_p = [16, 7, 20, 21, 29, 12, 28, 17,
 def encrypt(pt, rk):
 	# Convert plain text to binary
     pt = text2bin(pt)
-
+    print("Plain Text : ", bin2hex(pt))
     # Initial Permutation
     pt = permute(pt, initial_perm, 64)
 
@@ -209,8 +250,8 @@ def encrypt(pt, rk):
         else:
             left = result
 			
-        print("Round ", i + 1, " ", left,
-		" ", right, " ", rk[i])
+        print("Round ", i + 1, " ", bin2hex(left),
+		" ", bin2hex(right), " ", bin2hex(rk[i]))
 			
     # Combination
     combine = left + right
@@ -244,17 +285,10 @@ shift_table = [1, 1, 2, 2,
 			2, 2, 2, 1]
 
 # Input Key
-key = [1, 2, 3, 4, 5, 6, 7, 8,
-	    9, 10, 11, 12, 13, 14, 15, 16,
-        17, 18, 19, 20, 21, 22, 23, 24,
-		25, 26, 27, 28, 29, 30, 31, 32,
-        33, 34, 35, 36, 37, 38, 39, 40,
-		41, 42, 43, 44, 45, 46, 47, 48,
-        49, 50, 51, 52, 53, 54, 55, 56,
-		57, 58, 59, 60, 61, 62, 63, 64]
+key = 'ABCDEF1234567890'
 
 # Convert key to binary
-key = dec2binlist(key)
+key = hex2bin(key)
 
 # Initial permutation of key using PC-1 to 56 bits
 key = permute(key, keyp1, 56)
@@ -281,10 +315,10 @@ for i in range(0, 16):
 
 plain_text = "Hello World!"
 print("Encryption")
-cipher_text = encrypt(plain_text, rk)
+cipher_text = bin2hex(encrypt(plain_text, rk))
 print("Cipher Text : ", cipher_text)
 
 print("Decryption")
 rk_rev = rk[::-1]
-text = bin2text(encrypt(cipher_text, rk_rev))
+text = bin2hex(encrypt(cipher_text, rk_rev))
 print("Plain Text : ", text)
