@@ -9,6 +9,11 @@ def dec2bin(num):
 			ans = '0' + ans
 	return ans
 
+# ASCII text to binary conversion
+def text2bin(text):
+    bin = ''.join(format(ord(char), '08b') for char in text)
+    return bin
+
 # Permute function to rearrange the bits
 def permute(k, arr, n):
 	permutation = ""
@@ -170,3 +175,18 @@ key = permute(key, keyp1, 56)
 left = key[0:28]
 right = key[28:56]
 
+# 16 round keys
+rk = []
+for i in range(0, 16):
+	# Shifting the bits by nth shifts by checking from shift table
+	left = shift_left(left, shift_table[i])
+	right = shift_left(right, shift_table[i])
+	
+    # Permute left and right
+	left_permuted = permute(left, keyp2, 24)
+	right_permuted = permute(right, keyp2, 24)
+
+	# Combine left and right and assign to use as round key
+	round_key = left_permuted + right_permuted
+
+	rk.append(round_key)
