@@ -1,6 +1,4 @@
 # Hexadecimal to binary conversion
-
-
 def hex2bin(hex):
 	mp = {'0': "0000",
 		'1': "0001",
@@ -77,7 +75,21 @@ def text2hex(s):
     return ''.join(format(ord(c), '02X') for c in s)
 
 def hex2text(hex_string):
-    return bytes.fromhex(hex_string).decode('ascii')
+    return bytes.fromhex(hex_string).decode('latin-1')
+
+# Padding function (PKCS7)
+def pad(data, block_size=64):
+    padding_len = block_size - len(data) % block_size
+    padding = f'{padding_len:08b}' * (padding_len // 8)
+    return data + padding
+
+# Unpadding function (PKCS7)
+def unpad(data):
+	# Get the last byte to find the padding length in bytes
+    padding_len = int(data[-8:], 2)
+    # Remove the padding by slicing the data
+    return data[:-padding_len]
+
 
 # Permute function to rearrange the bits
 def permute(k, arr, n):
@@ -204,51 +216,63 @@ perm_p = [16, 7, 20, 21, 29, 12, 28, 17,
 
 def encrypt(pt, rk):
 	# Convert plain text to binary
-    pt = hex2bin(pt)
-    print("Plain Text : ", bin2hex(pt))
-    # Initial Permutation
-    pt = permute(pt, initial_perm, 64)
+	pt = text2hex(pt)
+	pt = hex2bin(pt)
+	ptlength = len(pt)
+	if ptlength % 64 != 0:
+		pt = pad(pt, 64)
+	ptlength = len(pt)
+	#print("Plain Text : ", hex2text(bin2hex(pt)))
+	
+	cipher_texts = []
 
-    # Splitting
-    left = pt[0:32]
-    right = pt[32:64]
+	for i in range(0, ptlength, 64):
+		# Initial Permutation
+		div_pt = pt[i:i + 64]
+	#	print("Divided Plain Text : ", hex2text(bin2hex(div_pt)))
+		div_pt = permute(div_pt, initial_perm, 64)
 
-    for i in range(0, 16):
-		# Expand right to 48 bits using permutation expansion
-        right_expanded = permute(right, exp_e, 48)
-		
-        # Add to subkey using XOR
-        subkey = xor(right_expanded, rk[i])
-		
-        # Travel through 8 S-Boxes
-        sbox_bin = ""
-        for j in range(0, 8):
-            row = bin2dec(int(subkey[j * 6] + subkey[j * 6 + 5]))
-            col = bin2dec(int(subkey[j * 6 + 1] + subkey[j * 6 + 2] + subkey[j * 6 + 3] + subkey[j * 6 + 4]))
-            sbox_val = sbox[j][row][col]
-            sbox_bin = sbox_bin + dec2bin(sbox_val)
-		
-        # Permute S-Box value into 32 bit
-        sbox_bin = permute(sbox_bin, perm_p, 32)
-		
-        # XOR left and sbox value
-        result = xor(left, sbox_bin)
-		
-        if i != 15:
-            left = right
-            right = result
-        else:
-            left = result
+		# Splitting
+		left = div_pt[0:32]
+		right = div_pt[32:64]
+
+		for j in range(0, 16):
+			# Expand right to 48 bits using permutation expansion
+			right_expanded = permute(right, exp_e, 48)
 			
-        print("Round ", i + 1, " ", bin2hex(left),
-		" ", bin2hex(right), " ", bin2hex(rk[i]))
+			# Add to subkey using XOR
+			subkey = xor(right_expanded, rk[j])
 			
-    # Combination
-    combine = left + right
+			# Travel through 8 S-Boxes
+			sbox_bin = ""
+			for k in range(0, 8):
+				row = bin2dec(int(subkey[k * 6] + subkey[k * 6 + 5]))
+				col = bin2dec(int(subkey[k * 6 + 1] + subkey[k * 6 + 2] + subkey[k * 6 + 3] + subkey[k * 6 + 4]))
+				sbox_val = sbox[k][row][col]
+				sbox_bin = sbox_bin + dec2bin(sbox_val)
+			
+			# Permute S-Box value into 32 bit
+			sbox_bin = permute(sbox_bin, perm_p, 32)
+			
+			# XOR left and sbox value
+			result = xor(left, sbox_bin)
+			
+			if j != 15:
+				left = right
+				right = result
+			else:
+				left = result
+				
+			print("Round ", j + 1, " ", bin2hex(left),
+			" ", bin2hex(right), " ", bin2hex(rk[j]))
+				
+		# Combination
+		combine = left + right
 
-	# final rearranging of bits using inversed initial permutation to get cipher text
-    cipher_text = permute(combine, initial_perm_inv, 64)
-    return cipher_text
+		# final rearranging of bits using inversed initial permutation to get cipher text
+		cipher_texts.append(permute(combine, initial_perm_inv, 64))
+	cipher_text = "".join(cipher_texts)
+	return cipher_text
 		
 # Parity bit drop table choice 1 (PC-1)
 keyp1 = [57, 49, 41, 33, 25, 17, 9,
@@ -303,15 +327,18 @@ for i in range(0, 16):
 
 	rk.append(round_key)
 
-plain_text = "Hello World"
-plain_text = text2hex(plain_text)
+plain_text = "Hello world is definitely writtenn in more than 64 bits"
+#plain_text = text2hex(plain_text)
 
 print("Encryption")
 cipher_text = bin2hex(encrypt(plain_text, rk))
-print("Cipher Text : ", cipher_text)
+print("Hex Cipher Text : ", cipher_text)
+cipher_text = hex2text(cipher_text)
+#print("Cipher Text : ", cipher_text)
 
 print("Decryption")
 rk_rev = rk[::-1]
-text = bin2hex(encrypt(cipher_text, rk_rev))
-print("Hex Plain Text : ", text)
-print("Plain Text : ", hex2text(text))
+text = bin2hex(unpad(encrypt(cipher_text, rk_rev)))
+text = hex2text(text)
+#print("Hex Plain Text : ", text)
+print("Plain Text : ", text)
