@@ -83,19 +83,28 @@ def bin2text(bin_string):
     result = binary_bytes.decode('latin-1')
     return result
 
+def bin2bytes(binary_str):
+    # Convert binary string to bytes
+    return int(binary_str, 2).to_bytes((len(binary_str) + 7) // 8, byteorder='big')
+
+def bytes2bin(byte_data):
+    # Convert bytes back to a binary string
+    return ''.join(f'{byte:08b}' for byte in byte_data)
+
 # Padding function (PKCS7)
-def pad(data, block_size=64):
-    padding_len = block_size - len(data) % block_size
-    padding = f'{padding_len:08b}' * (padding_len // 8)
+def pad(data, block_size=8):
+    padding_len = block_size - (len(data) % block_size)
+    padding = bytes([padding_len]) * padding_len
     return data + padding
 
 # Unpadding function (PKCS7)
 def unpad(data):
-	# Get the last byte to find the padding length in bytes
-    padding_len = int(data[-8:], 2)
-    # Remove the padding by slicing the data
-    return data[:-padding_len]
-
+    padding_len = data[-1]
+    if padding_len < 1 or padding_len > 8:
+        return data
+    if data[-padding_len:] == bytes([padding_len]) * padding_len:
+        return data[:-padding_len]
+    return data
 
 # Permute function to rearrange the bits
 def permute(k, arr, n):
@@ -253,7 +262,8 @@ def encrypt(pt, rk):
 	pt = hex2bin(pt)
 	ptlength = len(pt)
 	if ptlength % 64 != 0:
-		pt = pad(pt, 64)
+		pt = pad(bin2bytes(pt))
+		pt = bytes2bin(pt)
 	ptlength = len(pt)
 	#print("Plain Text : ", hex2text(bin2hex(pt)))
 	
@@ -310,6 +320,8 @@ def encrypt(pt, rk):
 def decrypt(cipher_text, rk):
 	rk_rev = rk[::-1]
 	decrypted_bits = (encrypt(cipher_text, rk_rev))
+	decrypted_bytes = unpad(bin2bytes(decrypted_bits))
+	decrypted_bits = bytes2bin(decrypted_bytes)
 	#return bin2text(decrypted_bits)
 	return hex2text(bin2hex(decrypted_bits))
 		
