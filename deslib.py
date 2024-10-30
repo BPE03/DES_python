@@ -77,6 +77,12 @@ def text2hex(s):
 def hex2text(hex_string):
     return bytes.fromhex(hex_string).decode('latin-1')
 
+def bin2text(bin_string):
+	# Convert to bytes first, then decode
+    binary_bytes = int(bin_string, 2).to_bytes(len(bin_string) // 8, byteorder='big')
+    result = binary_bytes.decode('latin-1')
+    return result
+
 # Padding function (PKCS7)
 def pad(data, block_size=64):
     padding_len = block_size - len(data) % block_size
@@ -206,7 +212,6 @@ sbox = [# S-Box 1
             [7, 11, 4, 1, 9, 12, 14, 2, 0, 6, 10, 13, 15, 3, 5, 8],
             [2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11]
         ]]
-#print(sbox)
 
 # Permutation Function (P) Table
 perm_p = [16, 7, 20, 21, 29, 12, 28, 17,
@@ -257,7 +262,7 @@ def encrypt(pt, rk):
 	for i in range(0, ptlength, 64):
 		# Initial Permutation
 		div_pt = pt[i:i + 64]
-	#	print("Divided Plain Text : ", hex2text(bin2hex(div_pt)))
+		#print("Divided Plain Text : ", bin2text(div_pt))
 		div_pt = permute(div_pt, initial_perm, 64)
 
 		# Splitting
@@ -291,8 +296,8 @@ def encrypt(pt, rk):
 			else:
 				left = result
 				
-			print("Round ", j + 1, " ", bin2hex(left),
-			" ", bin2hex(right), " ", bin2hex(rk[j]))
+			# print("Round ", j + 1, " ", bin2hex(left),
+			# " ", bin2hex(right), " ", bin2hex(rk[j]))
 				
 		# Combination
 		combine = left + right
@@ -304,7 +309,9 @@ def encrypt(pt, rk):
 
 def decrypt(cipher_text, rk):
 	rk_rev = rk[::-1]
-	return (encrypt(cipher_text, rk_rev))
+	decrypted_bits = (encrypt(cipher_text, rk_rev))
+	#return bin2text(decrypted_bits)
+	return hex2text(bin2hex(decrypted_bits))
 		
 # Parity bit drop table choice 1 (PC-1)
 keyp1 = [57, 49, 41, 33, 25, 17, 9,

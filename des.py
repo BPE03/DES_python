@@ -1,17 +1,19 @@
 import deslib
 
 # Input Key
-key = 'ABCDEF1234567890'
-plain_text = "Hello world is definitely writtenn in more than 64 bits"
+key = '1234567890ABCDEF'
+plain_text = "udah bisa coyyyy halogen"
 
 rk = deslib.make_rk(key)
 
 print("Encryption")
-cipher_text = deslib.bin2hex(deslib.encrypt(plain_text, rk))
-print("Hex Cipher Text : ", cipher_text)
-cipher_text = deslib.hex2text(cipher_text)
+cipher_text = deslib.encrypt(plain_text, rk)
+print("Hex Cipher Text : ", deslib.bin2hex(cipher_text))
+cipher_text = cipher_text.encode('latin-1')
+cipher_text = cipher_text.decode('latin-1')
+cipher_text = deslib.bin2text(cipher_text)
 
 print("Decryption")
-text = deslib.bin2hex(deslib.unpad(deslib.decrypt(cipher_text, rk)))
-text = deslib.hex2text(text)
+text = (deslib.decrypt(cipher_text, rk))
+#text = deslib.hex2text(text)
 print("Plain Text : ", text)
