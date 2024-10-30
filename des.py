@@ -214,6 +214,34 @@ perm_p = [16, 7, 20, 21, 29, 12, 28, 17,
 	    2, 8, 24, 14, 32, 27, 3, 9,
 	    19, 13, 30, 6, 22, 11, 4, 25]
 
+def make_rk(key):
+	# Convert key to binary
+	key = hex2bin(key)
+
+	# Initial permutation of key using PC-1 to 56 bits
+	key = permute(key, keyp1, 56)
+
+	# Splitting
+	left_key = key[0:28]
+	right_key = key[28:56]
+
+	# 16 round keys
+	rk = []
+	for i in range(0, 16):
+		# Shifting the bits by nth shifts by checking from shift table
+		left_key = shift_left(left_key, shift_table[i])
+		right_key = shift_left(right_key, shift_table[i])
+		
+		# Permute left and right
+		left_key_permuted = permute(left_key, keyp2, 24)
+		right_key_permuted = permute(right_key, keyp2, 24)
+
+		# Combine left and right and assign to use as round key
+		round_key = left_key_permuted + right_key_permuted
+
+		rk.append(round_key)
+	return rk
+
 def encrypt(pt, rk):
 	# Convert plain text to binary
 	pt = text2hex(pt)
@@ -273,6 +301,10 @@ def encrypt(pt, rk):
 		cipher_texts.append(permute(combine, initial_perm_inv, 64))
 	cipher_text = "".join(cipher_texts)
 	return cipher_text
+
+def decrypt(cipher_text, rk):
+	rk_rev = rk[::-1]
+	return (encrypt(cipher_text, rk_rev))
 		
 # Parity bit drop table choice 1 (PC-1)
 keyp1 = [57, 49, 41, 33, 25, 17, 9,
@@ -300,35 +332,10 @@ shift_table = [1, 1, 2, 2,
 
 # Input Key
 key = 'ABCDEF1234567890'
-
-# Convert key to binary
-key = hex2bin(key)
-
-# Initial permutation of key using PC-1 to 56 bits
-key = permute(key, keyp1, 56)
-
-# Splitting
-left = key[0:28]
-right = key[28:56]
-
-# 16 round keys
-rk = []
-for i in range(0, 16):
-	# Shifting the bits by nth shifts by checking from shift table
-	left = shift_left(left, shift_table[i])
-	right = shift_left(right, shift_table[i])
-	
-    # Permute left and right
-	left_permuted = permute(left, keyp2, 24)
-	right_permuted = permute(right, keyp2, 24)
-
-	# Combine left and right and assign to use as round key
-	round_key = left_permuted + right_permuted
-
-	rk.append(round_key)
-
 plain_text = "Hello world is definitely writtenn in more than 64 bits"
 #plain_text = text2hex(plain_text)
+
+rk = make_rk(key)
 
 print("Encryption")
 cipher_text = bin2hex(encrypt(plain_text, rk))
@@ -337,8 +344,7 @@ cipher_text = hex2text(cipher_text)
 #print("Cipher Text : ", cipher_text)
 
 print("Decryption")
-rk_rev = rk[::-1]
-text = bin2hex(unpad(encrypt(cipher_text, rk_rev)))
+text = bin2hex(unpad(decrypt(cipher_text, rk)))
 text = hex2text(text)
 #print("Hex Plain Text : ", text)
 print("Plain Text : ", text)
