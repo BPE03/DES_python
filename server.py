@@ -1,4 +1,3 @@
-import des
 import socket
 import threading
 
@@ -17,9 +16,11 @@ def handle_client(client_socket):
         try:
             # Receive and decrypt message
             encrypted_message = client_socket.recv(1024)
+            print('Received message')
             # message = custom_des.decrypt(encrypted_message.decode(), SECRET_KEY)
             # print(f'Received: {message}')
             broadcast(encrypted_message, client_socket)
+            print('Broadcasted message')
         except:
             clients.remove(client_socket)
             client_socket.close()
